@@ -331,11 +331,12 @@ polyhook::ResultType Hook_ConnectClient(polyhook::HookHandle hook, polyhook::Par
 	// const char* name, ns_address* pAddr, HSteamNetConnection hPeer, const C2S_CONNECT_Message& msg, const char* pszDecryptedPassword, const byte* pAuthTicket, int nAuthTicketLength, bool bIsLowViolence
 	auto name = polyhook::GetArgument<const char*>(params, 1);
 	auto pAddr = polyhook::GetArgument<ns_address*>(params, 2);
-	auto hPeer = polyhook::GetArgument<HSteamNetConnection>(params, 3);
-	auto pAuthTicket = polyhook::GetArgument<const byte*>(params, 6);
-	auto nAuthTicketLength = polyhook::GetArgument<int>(params, 7);
+	[[maybe_unused]] auto hPeer = polyhook::GetArgument<HSteamNetConnection>(params, 3);
+	[[maybe_unused]] auto pAuthTicket = polyhook::GetArgument<const byte*>(params, 6);
+	[[maybe_unused]] auto nAuthTicketLength = polyhook::GetArgument<int>(params, 7);
 
-	uint64 steamID64 = 0;
+	[[maybe_unused]] uint64 steamID64 = 0;
+
 #if defined (CS2)
 	if (nAuthTicketLength >= static_cast<int>(sizeof(steamID64))) {
 		steamID64 = *reinterpret_cast<const uint64*>(pAuthTicket);
@@ -354,6 +355,7 @@ polyhook::ResultType Hook_ConnectClient(polyhook::HookHandle hook, polyhook::Par
 	ns_address_render address(pAddr ? *pAddr : ns_address{});
 	plg::print(LS_DETAILED, "[ConnectClient] Deadlock client connected: name='{}', addr='{}'\n", name, address.String());
 #endif
+
 	return polyhook::ResultType::Ignored;
 }
 
