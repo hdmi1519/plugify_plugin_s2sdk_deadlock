@@ -1654,7 +1654,7 @@ extern "C" PLUGIN_API void SwitchClientTeam(int playerSlot, CSTeam team) {
 extern "C" PLUGIN_API void ChangeClientTeam(int playerSlot, CSTeam team) {
 	auto controller = helpers::GetController(playerSlot);
 	if (!controller) return;
-	controller->ChangeTeam(team);
+	controller->ChangeTeam(static_cast<int>(team));
 }
 
 /**
