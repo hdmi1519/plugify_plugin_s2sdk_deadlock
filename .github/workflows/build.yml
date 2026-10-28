@@ -13,28 +13,35 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Resolve Latest Upstream Release Tag
-        id: get_tag
-        shell: bash
-        run: |
-          TAG=$(curl -s "https://api.github.com/repos/untrustedmodders/plugify-plugin-s2sdk/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
-            TAG=$(git ls-remote --tags --sort="v:refname" https://github.com/untrustedmodders/plugify-plugin-s2sdk.git | tail -n1 | sed 's/.*\///')
-          fi
-          echo "Found latest release tag: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Checkout Upstream at Latest Release
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: untrustedmodders/plugify-plugin-s2sdk
-          ref: ${{ steps.get_tag.outputs.TAG }}
           submodules: recursive
           fetch-depth: 0
 
       - name: Shorten Working Path
         run: |
           subst B: "${{ github.workspace }}"
+
+      - name: Sync upstream
+        shell: bash
+        working-directory: B:/
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/untrustedmodders/plugify-plugin-s2sdk.git || true
+          git fetch upstream --tags
+          git merge upstream/main --no-edit || true
+          git submodule update --init --recursive
+
+      - name: Resolve Latest Upstream Release Tag
+        id: get_tag
+        shell: bash
+        working-directory: B:/
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "dev")
+          echo "Found tag: $TAG"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
       - name: Clean Build Directory
         working-directory: B:/
@@ -79,7 +86,7 @@ jobs:
         with:
           tag_name: "${{ steps.get_tag.outputs.TAG }}-deadlock"
           name: "Deadlock Build ${{ steps.get_tag.outputs.TAG }}"
-          body: "Automated Deadlock build for plugify-plugin-s2sdk release ${{ steps.get_tag.outputs.TAG }}"
+          body: "Automated Deadlock build from fork for plugify-plugin-s2sdk release ${{ steps.get_tag.outputs.TAG }}"
           files: B:/plugify-plugin-s2sdk-deadlock-build-win.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
