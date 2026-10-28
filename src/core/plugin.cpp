@@ -336,12 +336,12 @@ polyhook::ResultType Hook_ConnectClient(polyhook::HookHandle hook, polyhook::Par
 	auto nAuthTicketLength = polyhook::GetArgument<int>(params, 7);
 
 	uint64 steamID64 = 0;
+#if defined (CS2)
 	if (nAuthTicketLength >= static_cast<int>(sizeof(steamID64))) {
 		steamID64 = *reinterpret_cast<const uint64*>(pAuthTicket);
 	}
 
 	ns_address_render address(pAddr ? *pAddr : ns_address{});
-
 	plg::print(LS_DETAILED, "[ConnectClient] = {}, {}, {}\n", name, address.String(), steamID64);
 
 	ENetworkDisconnectionReason reason = g_PlayerManager.OnClientConnect(name, address.String(), steamID64);
@@ -350,7 +350,10 @@ polyhook::ResultType Hook_ConnectClient(polyhook::HookHandle hook, polyhook::Par
 		polyhook::SetReturn<CServerSideClientBase*>(ret, nullptr);
 		return polyhook::ResultType::Supercede;
 	}
-
+#else
+	ns_address_render address(pAddr ? *pAddr : ns_address{});
+	plg::print(LS_DETAILED, "[ConnectClient] Deadlock client connected: name='{}', addr='{}'\n", name, address.String());
+#endif
 	return polyhook::ResultType::Ignored;
 }
 
